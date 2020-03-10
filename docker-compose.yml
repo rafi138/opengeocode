@@ -16,11 +16,13 @@ services:
   ogc:
     build: .
     working_dir: '/app'
-    command: ["python3", "server.py"]
+    command: ["/usr/local/bin/gunicorn", "--bind", "0.0.0.0:5000", "server:app", "--workers=16"]
     depends_on:
       - solr
     env_file: .env
     restart: unless-stopped
+    volumes:
+      - .:/app
     ports:
       - 5000:5000
 

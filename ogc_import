@@ -10,8 +10,22 @@ osmfilter $COUNTRY.osm  --keep="addr:country= and addr:city= and addr:street= an
 rm $COUNTRY.osm
 rm $COUNTRY-latest.osm.pbf
 
-#curl "http://solr:8983/solr/admin/collections?action=CREATE&name=gettingstarted3&numShards=1&collection.configName=_default"
-#curl "http://solr:8983/solr/admin/collections?action=CREATE&name=$COUNTRY"
-curl "http://solr:8983/solr/opengeocode/update?commit=true" --data-binary @$COUNTRY.csv -H 'Content-type:application/csv'
+PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -d $DATABASE_DB -U $DATABASE_USER  << EOF
+CREATE EXTENSION pg_trgm;
+DROP TABLE $COUNTRY;
+CREATE TABLE $COUNTRY (
+longitude float,
+latitude float,
+country text,
+postcode text,
+city text,
+street text,
+housenumber text
+);
+CREATE INDEX $COUNTRY_postcode_idx ON $COUNTRY USING GIN(postcode gin_trgm_ops);
+CREATE INDEX $COUNTRY_city_idx ON $COUNTRY USING GIN(city gin_trgm_ops);
+CREATE INDEX $COUNTRY_street_idx ON $COUNTRY USING GIN(street gin_trgm_ops);
+EOF
 
-#curl "http://solr:8983/solr/opengeocode/update?commit=true" --data-binary @monaco.csv -H 'Content-type:application/csv'
+pgloader --with "fields terminated by ';'" $COUNTRY.csv pgsql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST/$DATABASE_DB?tablename=$COUNTRY
+rm $COUNTRY.csv
