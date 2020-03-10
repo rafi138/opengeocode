@@ -1,22 +1,24 @@
 version: "3.7"
 services:
-  db:
-    env_file: .env
-    image: postgres:10
-    restart: unless-stopped
+
+  solr:
+    image: solr:7
     ports:
-      - "127.0.0.1:5432:5432"
+    - "8983:8983"
     volumes:
-      - db_home:/var/lib/postgresql/data
+    - ./data:/opt/solr/server/solr/mycores
+    - ./myscript.sh:/myscript.sh:ro
+    entrypoint:
+    - /myscript.sh
+    - -c
+    - mycore
 
   ogc:
     build: .
     working_dir: '/app'
     command: ["python3", "server.py"]
-    #command: ["/usr/local/bin/gunicorn", "--bind", "0.0.0.0:5000", "wsgi:server", "--workers=16"]
-    #command: ["flask", "run", "-p", "8088", "--with-threads", "--reload", "--debugger", "--host=0.0.0.0"]
     depends_on:
-      - db
+      - solr
     env_file: .env
     restart: unless-stopped
     ports:
@@ -25,3 +27,5 @@ services:
 volumes:
   db_home:
     external: false
+
+  data:
