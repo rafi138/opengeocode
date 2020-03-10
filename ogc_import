@@ -1,0 +1,29 @@
+#!/bin/bash
+CONTINENT=$1
+COUNTRY=$2
+echo "https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf"
+wget https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf
+osmconvert  $COUNTRY-latest.osm.pbf --all-to-nodes -o=$COUNTRY.osm
+osmfilter $COUNTRY.osm  --keep="addr:country= and addr:city= and addr:street= and addr:housenumber=" \
+--ignore-depemdencies --drop-relations \
+| osmconvert - --csv-separator=';'  --csv="@lon @lat addr:country addr:postcode addr:city addr:street addr:housenumber" > $COUNTRY.csv
+rm $COUNTRY.osm
+rm $COUNTRY-latest.osm.pbf
+
+
+PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -d $DATABASE_DB -U $DATABASE_USER  << EOF
+DROP TABLE $COUNTRY;
+CREATE TABLE $COUNTRY (
+longitude float,
+latitude float,
+country text,
+postcode integer,
+city text,
+street text,
+housenumber text
+);
+EOF
+
+pgloader --with "fields terminated by ';'" $COUNTRY.csv pgsql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST/$DATABASE_DB?tablename=$COUNTRY
+rm $COUNTRY.csv
+

@@ -1,0 +1,27 @@
+version: "3.7"
+services:
+  db:
+    env_file: .env
+    image: postgres:10
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db_home:/var/lib/postgresql/data
+
+  ogc:
+    build: .
+    working_dir: '/app'
+    command: ["python3", "server.py"]
+    #command: ["/usr/local/bin/gunicorn", "--bind", "0.0.0.0:5000", "wsgi:server", "--workers=16"]
+    #command: ["flask", "run", "-p", "8088", "--with-threads", "--reload", "--debugger", "--host=0.0.0.0"]
+    depends_on:
+      - db
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+
+volumes:
+  db_home:
+    external: false
