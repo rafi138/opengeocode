@@ -5,6 +5,11 @@ HTTP API Fuzzy match address resolution to longitude, latitude coordinate
 
 Based on open street map data, available at https://download.geofabrik.de/
 
+Authors:
+--------
+
+Sebastien Campion
+
 Example
 _______
 
