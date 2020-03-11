@@ -3,8 +3,8 @@ CONTINENT=$1
 COUNTRY=$2
 echo "https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf"
 wget https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf
-osmconvert  $COUNTRY-latest.osm.pbf --all-to-nodes -o=$COUNTRY.osm
-osmfilter $COUNTRY.osm  --keep="addr:country= and addr:city= and addr:street= and addr:housenumber=" \
+osmconvert  $COUNTRY-latest.osm.pbf  -o=$COUNTRY.o5m
+osmfilter $COUNTRY.o5m  --keep="addr:country= and addr:city= and addr:street= and addr:housenumber=" \
 --ignore-depemdencies --drop-relations \
 | osmconvert - --csv-headline --csv-separator=';'  --csv="@lon @lat addr:country addr:postcode addr:city addr:street addr:housenumber" > $COUNTRY.csv
 rm $COUNTRY.osm
@@ -28,4 +28,4 @@ CREATE INDEX $COUNTRY_street_idx ON $COUNTRY USING GIN(street gin_trgm_ops);
 EOF
 
 pgloader --with "fields terminated by ';'" $COUNTRY.csv pgsql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST/$DATABASE_DB?tablename=$COUNTRY
-rm $COUNTRY.csv
+#rm $COUNTRY.csv
