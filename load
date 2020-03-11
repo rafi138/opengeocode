@@ -28,4 +28,4 @@ CREATE INDEX $COUNTRY_street_idx ON $COUNTRY USING GIN(street gin_trgm_ops);
 EOF
 
 pgloader --with "fields terminated by ';'" $COUNTRY.csv pgsql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST/$DATABASE_DB?tablename=$COUNTRY
-#rm $COUNTRY.csv
+rm $COUNTRY.csv
