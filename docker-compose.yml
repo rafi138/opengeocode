@@ -1,24 +1,21 @@
 version: "3.7"
 services:
 
-  solr:
-    image: solr:7
+  db:
+    env_file: .env
+    image: postgres:10
+    restart: unless-stopped
     ports:
-    - "8983:8983"
+      - "127.0.0.1:5432:5432"
     volumes:
-    - ./data:/opt/solr/server/solr/mycgitores
-    - ./myscript.sh:/myscript.sh:ro
-    entrypoint:
-    - /myscript.sh
-    - -c
-    - mycore
+      - db_home:/var/lib/postgresql/data
 
   ogc:
     build: .
     working_dir: '/app'
-    command: ["/usr/local/bin/gunicorn", "--bind", "0.0.0.0:5000", "server:app", "--workers=16"]
+    command: ["/usr/local/bin/gunicorn", "--worker-class=gevent", "--worker-connections=1000", "--bind", "0.0.0.0:5000", "app:app", "--workers=3"]
     depends_on:
-      - solr
+      - db
     env_file: .env
     restart: unless-stopped
     volumes:
@@ -29,5 +26,3 @@ services:
 volumes:
   db_home:
     external: false
-
-  data:

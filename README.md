@@ -1,24 +1,72 @@
 Open GeoCoding
---------------
+==============
 HTTP API Fuzzy match address resolution to longitude, latitude coordinate
 
+Based on open street map data, available at https://download.geofabrik.de/ indexed using trigrams extension of PostgreSQL.
 
-Based on open street map data, available at https://download.geofabrik.de/
+Run it 
+-------
 
-Example
-_______
+Lauch on port 5000
 
-HTTP post on endpoint /resolve with header Content-Type: application/json : 
+    docker-compose up 
+
+
+HTTP GET API :
+--------------
+    http://localhost:5000/country/city
+    http://localhost:5000/country/city/postcode
+    http://localhost:5000/country/city/postcode/street
+    http://localhost:5000/country/city/postcode/street/housenumber
+
+
+Example :
+_________
+
+
+    curl http://localhost:5000/belgium/Maasmechelen/3630/Rijksweg/431
+
+Response:
 
 ```json
 {
+  "request": null,
+  "response": [
+    [
+      5.6952999,
+      50.9601391,
+      "BE",
+      "3630",
+      "Maasmechelen",
+      "Rijksweg",
+      "431",
+      4.0
+    ]
+  ],
+  "time": 142.05574989318848
+}
+
+```
+
+HTTP POST API :
+---------------
+
+HTTP post on endpoint /json with header Content-Type: application/json.
+
+In you file myquery.json:
+```json
+{
   "country":"belgium",
-  "postcode":"3630",
+  "postcode":"Rijksweg",
   "city": "Maasmechelen",
   "street": "Rijksweg",
   "housenumber": "431"
 }
 ```
+
+Post it using the following command :
+
+    curl --header "Content-Type: application/json"  --request POST  --data @myquery.json  http://localhost:5000/resolve
 
 Result:
 
@@ -50,7 +98,7 @@ Result:
 
 
 Provisioning :
-______________
+--------------
 
 This step download osm data, convert it in csv, create table in postgres and load it.
 
@@ -61,12 +109,3 @@ Here a toy example :
 /!\ params are used to build the following osm url : **https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf**
 
 
-Lauch on port 5000
-__________________
-
-    docker-compose up 
-
-
-You can use the script resolve to the it 
-
-    ./resolve tests/debug.json

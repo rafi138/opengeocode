@@ -5,6 +5,7 @@ import time
 from flask import Flask, request, jsonify, g
 from psycopg2 import pool, sql
 
+
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('ogc')
@@ -21,8 +22,11 @@ def get_db():
     return g.db
 
 
-@app.route('/resolve', methods=['POST'])
-def resolve():
+@app.route('/<string:country>/<string:city>/')
+@app.route('/<string:country>/<string:city>/<string:postcode>')
+@app.route('/<string:country>/<string:city>/<string:postcode>/<string:street>')
+@app.route('/<string:country>/<string:city>/<string:postcode>/<string:street>/<string:housenumber>')
+def index(country, city='', postcode='', street='', housenumber=''):
     db = get_db()
     cur = db.cursor()
     q = request.get_json()
@@ -33,14 +37,19 @@ def resolve():
         "FROM {} WHERE city %% %s OR postcode %% %s OR street %% %s OR housenumber %% %s " \
         "ORDER BY similarity DESC NULLS LAST LIMIT 1;"
 
-    query = sql.SQL(s).format(sql.Identifier(q['country']))
-    params = (
-    q['city'], q['postcode'], q['street'], q['housenumber'], q['city'], q['postcode'], q['street'], q['housenumber'])
+    query = sql.SQL(s).format(sql.Identifier(country))
+    params = (city, postcode, street, housenumber, city, postcode, street, housenumber)
     start = time.time()
     cur.execute(query, params)
     end = time.time()
     results = [r for r in cur.fetchall()]
     return jsonify({'request': q, 'response': results, 'time': 1000 * (end - start)})
+
+
+@app.route('/json', methods=['POST'])
+def json():
+    q = request.get_json()
+    index(q['country'], q['city'], q['postcode'], q['street'], q['housenumber'] )
 
 
 if __name__ == '__main__':
