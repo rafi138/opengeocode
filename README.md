@@ -4,6 +4,8 @@ HTTP API Fuzzy match address resolution to longitude, latitude coordinate
 
 Based on open street map data, available at https://download.geofabrik.de/ indexed using trigrams extension of PostgreSQL.
 
+Author: Sebastien Campion
+
 Run it 
 -------
 
@@ -45,7 +47,6 @@ Response:
   ],
   "time": 142.05574989318848
 }
-
 ```
 
 HTTP POST API :
@@ -107,5 +108,3 @@ Here a toy example :
     docker-compose run ogc /app/ogc_import europe monaco
 
 /!\ params are used to build the following osm url : **https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf**
-
-
