@@ -5,6 +5,6 @@ RUN apt install -y pgloader
 RUN mkdir /app
 WORKDIR /app
 ADD requirements.txt .
-ADD server.py .
+ADD app.py .
 RUN pip3 install -r requirements.txt
 
