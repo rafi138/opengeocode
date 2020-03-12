@@ -53,7 +53,7 @@ def load():
     fp = os.path.join(data_dir, '%s.p' % country)
     with open(fp, 'wb') as f:
         pickle.dump((ind[country], inv[country]), f, protocol=pickle.HIGHEST_PROTOCOL)
-    return jsonify(inv)
+    return jsonify({'nb_of_insertions': len(ind[country])})
 
 
 @app.route('/<string:country>')
