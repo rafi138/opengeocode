@@ -39,10 +39,13 @@ def load():
 def index(country):
     if country in ind.keys():
         q = request.args.get('q')
+        s = time.time()
         res = ind[country].find(q)
+        e = time.time()
         return jsonify({'query': q,
                         'result': str(res),
-                        'coord': inv[country][str(res)]
+                        'coord': inv[country][str(res)],
+                        'time': e - s
                         })
     else:
         abort(404, description="Country %s not indexed" % country)
