@@ -1,8 +1,10 @@
+
 import codecs
 import csv
 import logging
-import ngram
+import time
 
+import ngram
 from flask import Flask, request, jsonify, abort
 
 app = Flask(__name__)
@@ -12,9 +14,11 @@ log = logging.getLogger('ogc')
 ind = {}
 inv = {}
 
+
 @app.route('/ls')
 def list():
-   return jsonify(ind.keys())
+   return ' '.join(ind.keys())
+
 
 @app.route('/load', methods=['POST'])
 def load():
