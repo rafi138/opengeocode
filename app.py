@@ -41,13 +41,17 @@ def load():
     inv[country] = {}
 
     stream = codecs.iterdecode(flask_file.stream, 'utf-8')
-    s_csv = csv.reader(map(lambda line: line.lower(), stream), delimiter=';')
+    s_csv = csv.reader(stream, delimiter=';')
     next(s_csv)
     for row in s_csv:
-        coord = tuple(row[0:2])
-        address = tuple(row[2:])
-        ind[country].add(' '.join(address))
-        inv[country][' '.join(address)] = (coord, address)
+        coord = tuple(map(float, row[0:2]))
+        address = row[2:]
+        ad = ' '.join(address).lower()
+        ind[country].add(ad)
+        inv[country][ad] = (coord, address)
+        log.debug(ad)
+        log.debug(address)
+        log.debug(coord)
 
     fp = os.path.join(data_dir, '%s.p' % country)
     with open(fp, 'wb') as f:
