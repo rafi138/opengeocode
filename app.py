@@ -12,6 +12,9 @@ log = logging.getLogger('ogc')
 ind = {}
 inv = {}
 
+@app.route('/ls')
+def list():
+   return jsonify(ind.keys())
 
 @app.route('/load', methods=['POST'])
 def load():

@@ -1,13 +1,13 @@
 #!/bin/bash
 CONTINENT=$1
 COUNTRY=$2
-echo "https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf"
-wget https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf
+echo "https://download.openstreetmap.fr/extracts/$CONTINENT/$COUNTRY-latest.osm.pbf"
+wget https://download.openstreetmap.fr/extracts/$CONTINENT/$COUNTRY-latest.osm.pbf
 osmconvert  $COUNTRY-latest.osm.pbf  -o=$COUNTRY.o5m
 osmfilter $COUNTRY.o5m  --keep="addr:country= and addr:city= and addr:street= and addr:housenumber=" \
 --ignore-depemdencies --drop-relations \
 | osmconvert - --csv-headline --csv-separator=';'  --csv="@lon @lat addr:country addr:postcode addr:city addr:street addr:housenumber" > $COUNTRY.csv
-rm $COUNTRY.osm
+rm $COUNTRY.o5m
 rm $COUNTRY-latest.osm.pbf
 curl --request POST -F file=@$COUNTRY.csv  http://localhost:5555/load
 #rm $COUNTRY.csv
