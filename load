@@ -9,23 +9,5 @@ osmfilter $COUNTRY.o5m  --keep="addr:country= and addr:city= and addr:street= an
 | osmconvert - --csv-headline --csv-separator=';'  --csv="@lon @lat addr:country addr:postcode addr:city addr:street addr:housenumber" > $COUNTRY.csv
 rm $COUNTRY.osm
 rm $COUNTRY-latest.osm.pbf
-
-PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -d $DATABASE_DB -U $DATABASE_USER  << EOF
-CREATE EXTENSION pg_trgm;
-DROP TABLE $COUNTRY;
-CREATE TABLE $COUNTRY (
-longitude float,
-latitude float,
-country text,
-postcode text,
-city text,
-street text,
-housenumber text
-);
-CREATE INDEX $COUNTRY_postcode_idx ON $COUNTRY USING GIN(postcode gin_trgm_ops);
-CREATE INDEX $COUNTRY_city_idx ON $COUNTRY USING GIN(city gin_trgm_ops);
-CREATE INDEX $COUNTRY_street_idx ON $COUNTRY USING GIN(street gin_trgm_ops);
-EOF
-
-pgloader --with "fields terminated by ';'" $COUNTRY.csv pgsql://$DATABASE_USER:$DATABASE_PASSWORD@$DATABASE_HOST/$DATABASE_DB?tablename=$COUNTRY
-rm $COUNTRY.csv
+curl --request POST -F file=@$COUNTRY.csv  http://localhost:5555/load
+#rm $COUNTRY.csv
