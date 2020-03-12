@@ -43,7 +43,7 @@ def index(country, city='', postcode='', street='', housenumber=''):
     cur.execute(query, params)
     end = time.time()
     results = [r for r in cur.fetchall()]
-    return jsonify({'request': q, 'response': results, 'time': 1000 * (end - start)})
+    return jsonify({'request': (city, postcode, street, housenumber), 'response': results, 'time': 1000 * (end - start)})
 
 
 @app.route('/json', methods=['POST'])
