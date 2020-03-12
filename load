@@ -1,8 +1,8 @@
 #!/bin/bash
 CONTINENT=$1
 COUNTRY=$2
-echo "https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf"
-wget https://download.geofabrik.de/$CONTINENT/$COUNTRY-latest.osm.pbf
+echo "https://download.openstreetmap.fr/extracts/$CONTINENT/$COUNTRY-latest.osm.pbf"
+wget https://download.openstreetmap.fr/extracts/$CONTINENT/$COUNTRY-latest.osm.pbf
 osmconvert  $COUNTRY-latest.osm.pbf  -o=$COUNTRY.o5m
 osmfilter $COUNTRY.o5m  --keep="addr:country= and addr:city= and addr:street= and addr:housenumber=" \
 --ignore-depemdencies --drop-relations \
