@@ -49,9 +49,6 @@ def load():
         ad = ' '.join(address).lower()
         ind[country].add(ad)
         inv[country][ad] = (coord, address)
-        log.debug(ad)
-        log.debug(address)
-        log.debug(coord)
 
     fp = os.path.join(data_dir, '%s.p' % country)
     with open(fp, 'wb') as f:
