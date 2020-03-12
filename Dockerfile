@@ -5,5 +5,5 @@ WORKDIR /app
 ADD requirements.txt .
 ADD app.py .
 RUN pip3 install -r requirements.txt
-CMD: ["/usr/local/bin/gunicorn", "--worker-class=gevent", "--worker-connections=1000", "--bind", "0.0.0.0:5555", "app:app", "--workers=3"]
+CMD ["/usr/local/bin/gunicorn", "--worker-class=gevent", "--worker-connections=1000", "--bind", "0.0.0.0:5555", "app:app", "--workers=3"]
 
