@@ -1,7 +1,7 @@
 Open GeoCoding
 ==============
 
-![Logo](ogc.svg)
+![Logo](images/ogc.svg)
 
 
 **Ultra fast fuzzy match address geocode resolution HTTP API.**
@@ -10,7 +10,7 @@ Based on open street map data, available at https://download.geofabrik.de/ index
 
 Author: Sebastien Campion
 
-![Screenshot](screenshot.png)
+![Screenshot](images/screenshot.png)
 
 
 Load data  

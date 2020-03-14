@@ -7,8 +7,7 @@ import pickle
 import time
 
 import ngram
-from flask import Flask, request, jsonify, abort, render_template_string, render_template
-from werkzeug.datastructures import FileStorage
+from flask import Flask, request, jsonify, abort, render_template_string
 
 data_dir = "data"
 
@@ -94,7 +93,8 @@ def index():
             {% endfor %}
         </select>
         <input type="text" id="query"><hr>
-        <span id="result"></span>
+        <span id="result"></span><br>
+        <span id="time"></span>
         </div>
         <script type="text/javascript">
             (function() {
@@ -109,6 +109,7 @@ def index():
                       } else { 
                         var jsonResponse = JSON.parse(xhr.response);
                         document.querySelector("#result").innerHTML = jsonResponse.result;
+                        document.querySelector("#time").innerHTML = 'time : ' + Math.round(Number(jsonResponse.time) * 1000) + ' nanosecs';
                       }
                     }
                 }
@@ -117,7 +118,7 @@ def index():
         </body>
         </html> 
         """
-    return render_template_string(t, svg=open('ogc.svg').read(), countries=ind.keys())
+    return render_template_string(t, svg=open(os.path.join('images', 'ogc.svg')).read(), countries=ind.keys())
 
 
 if __name__ == '__main__':
