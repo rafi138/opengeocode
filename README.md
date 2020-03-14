@@ -13,8 +13,10 @@ Author: Sebastien Campion
 ![Screenshot](screenshot.png)
 
 
-Load data in memory 
---------------------
+Load data  
+---------
+
+In memory and in a persistance way using data directory.
 
 Using command line : 
 
