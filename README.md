@@ -6,7 +6,11 @@ Open GeoCoding
 
 **Ultra fast fuzzy match address geocode resolution HTTP API.**
 
-Based on open street map data, available at https://download.geofabrik.de/ indexed using ngrams.
+This software provides an HTTP Rest API to resolve an address in a string format (even malformed)  into longitude & latitude coordinates. 
+It can use to replace commercial APIs like [Microsoft Bing](https://www.bing.com/api/maps/sdkrelease/mapcontrol/isdk/searchbyaddress) or [Google Maps](https://developers.google.com/maps/documentation/geocoding/intro)
+
+
+Based on [open street map data](https://download.geofabrik.de), an in-memory index is built on the fly using ngrams. Deploy on-premise, it offers an efficient way to solve large scale geocode compute with a high throughput and a low latency.
 
 Author: Sebastien Campion
 
