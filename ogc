@@ -95,13 +95,16 @@ def index():
         <input type="text" id="query"><hr>
         <span id="result"></span><br>
         <span id="time"></span>
+        <hr>
+         <a href="https://github.com/scampion/opengeocode">github</a>
         </div>
+        
         <script type="text/javascript">
             (function() {
                 document.querySelector("#query").onkeyup = function (e) {
                     console.log();
                   let xhr = new XMLHttpRequest();
-                  xhr.open('GET', '/' + document.querySelector("#country").value + '?q=' + e.target.value);
+                  xhr.open('GET', './' + document.querySelector("#country").value + '?q=' + e.target.value);
                   xhr.send();
                     xhr.onload = function() {
                       if (xhr.status != 200) { 
