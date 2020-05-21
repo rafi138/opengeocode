@@ -1,6 +1,5 @@
 import csv
 import sys
-from collections import defaultdict, Counter
 import operator
 
 import esy.osm.pbf
@@ -9,48 +8,45 @@ import esy.osm.pbf
 def parse():
     osm = esy.osm.pbf.File(sys.argv[1])
     refs = {}
-    postcodes = defaultdict(list)
-    ways = {}
+    pc_coord = {}
+    pc_city = {}
+    ways_names = {}
+    ways_ref = {}
 
     def get_postcode(lon, lat):
-        distances = {l: abs(lon - lo) + abs(lat - la) for l, (lo, la) in postcodes_coord.items()}
+        distances = {l: abs(lon - lo) + abs(lat - la) for l, (lo, la) in pc_coord.items()}
         return min(distances.items(), key=operator.itemgetter(1))[0]
 
+    print("First pass")
     for e in osm:
         if e.__class__.__name__ == 'Node':
-            print(e.tags)
-            refs[e.id] = e.lonlat
-            if 'addr:postcode' in e.tags:
-                city = e.tags['addr:city'] if 'addr:city' in e.tags else ''
-                postcodes[e.tags['addr:postcode']].append((e.lonlat, city))
+            # store the mapping between postcode and longlat and postcode and city
+            if 'addr:postcode' in e.tags and e.tags['addr:postcode'] not in pc_coord.keys() and 'addr:city' in e.tags:
+                pc_coord[e.tags['addr:postcode']] = e.lonlat
+                pc_city[e.tags['addr:postcode']] = e.tags['addr:city']
+
             if 'addr:city' in e.tags and 'addr:postcode' in e.tags and 'addr:street' in e.tags and 'addr:housenumber' in e.tags:
                 yield [e.lonlat[0], e.lonlat[1], e.tags['addr:postcode'], e.tags['addr:city'], e.tags['addr:street'], e.tags['addr:housenumber']]
             elif 'addr:city' in e.tags and 'addr:postcode' in e.tags and 'addr:street' in e.tags:
                 yield [e.lonlat[0], e.lonlat[1], e.tags['addr:postcode'], e.tags['addr:city'], e.tags['addr:street'], 0]
 
         if e.__class__.__name__ == 'Way' and 'highway' in e.tags and 'name' in e.tags:
-            ways[e.id] = (e.tags['name'], e.refs)
+            try:
+                ways_names[e.id] = e.tags['name']
+                ways_ref[e.id] = e.refs[0]
+            except Exception as e:
+                print("Error with %s" % str(e))
 
-    # compute means of postcode
-    postcodes_coord = {}
-    postcodes_city = {}
-    for postcode, v in postcodes.items():
-        mlon = sum([lon for (lon, lat), city in v]) / len(v)
-        mlat = sum([lat for (lon, lat), city in v]) / len(v)
-        postcodes_coord[postcode] = (mlon, mlat)
-        cities = Counter()
-        for (lon, lat), city in v:
-            cities[city] += 1
-        postcodes_city[postcode] = max(cities.items(), key=operator.itemgetter(1))[0]
-
-    for w, (name, rf) in ways.items():
-        print([r for r in rf])
-        coords = [refs[r] for r in rf if r in refs.keys()]
-        mlon = sum([lon for (lon, lat) in coords]) / len(coords)
-        mlat = sum([lat for (lon, lat) in coords]) / len(coords)
-        p = get_postcode(mlon, mlat)
-        print(postcodes_city[p], p, name, (mlon, mlat))
-        yield [mlon, mlat, p, postcodes_city[p], name]
+    print("Nuber of refs to resolve : %s" % len(ways_ref))
+    print("Second pass")
+    for e in osm:
+        if e.id in ways_ref.values() and e.lonlat:
+            wid = list(ways_ref.keys())[list(ways_ref.values()).index(e.id)]
+            name = ways_names[wid]
+            lon, lat = e.lonlat
+            p = get_postcode(lon, lat)
+            print("New address ", pc_city[p], p, name, (lon, lat))
+            yield [lon, lat, p, pc_city[p], name]
 
 
 if __name__ == '__main__':
