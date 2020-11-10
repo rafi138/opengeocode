@@ -7,7 +7,7 @@ Open GeoCoding
 ![Logo](images/ogc.svg)
 
 
-**Ultra fast fuzzy match address geocode resolution HTTP API.**
+**Ultra fast fuzzy match address geocode resolution HTTP API Server based on Open Street Map.**
 
 This software provides an HTTP Rest API to resolve an address in a string format (even malformed)  into longitude & latitude coordinates. 
 It can use to replace commercial APIs like [Microsoft Bing](https://www.bing.com/api/maps/sdkrelease/mapcontrol/isdk/searchbyaddress) or [Google Maps](https://developers.google.com/maps/documentation/geocoding/intro)
@@ -52,5 +52,20 @@ Query
       "result": "('MC', '98000', 'Monte-Carlo', 'Boulevard des Moulins', '2')"
     }
 
+
+Cite
+----
+
+```
+@software {
+  title = {OpenGeocode},
+  author = {Campion Sebastien},
+  date = {2020},
+  license = {AGPL},
+  url = {https://scamp.fr/opengeocode},
+  abstract = {Fast fuzzy match address geocode resolution HTTP API Server based on Open Street Map.},
+  repository= {https://github.com/scampion/opengeocode},
+}
+```
 
 
