@@ -1,3 +1,6 @@
+[![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/scampion/opengeocode/)](https://archive.softwareheritage.org/badge/origin/https://github.com/scampion/opengeocode/)
+
+
 Open GeoCoding
 ==============
 
