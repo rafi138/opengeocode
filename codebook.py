@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import re
+import re, sys
 import pickle
 import logging
 
@@ -27,20 +27,23 @@ def getdf(csv_filepath):
     for c in ['number', 'street', 'postalcode', 'city', 'Unnamed: 0']:
         del df[c]
     df.head()
+    print(df.info())
     return df
 
 
-def learn(df, f, tfidfthreshord=0.2, nb_trees=10):
+def learn(df, f, tfidfthreshord=0, nb_trees=10):
     logging.info("Vectorize %d entry with %d features", df.size, f)
-    vectorizer = TfidfVectorizer(min_df=1, analyzer=ngrams, max_features=f)
+    vectorizer = TfidfVectorizer(max_df=2000, min_df=1, analyzer=ngrams)#, max_features=f)
     tf_idf_matrix = vectorizer.fit_transform(df['address'])
 
+    print(tf_idf_matrix.shape)
+    f = tf_idf_matrix.shape[1]
     t = AnnoyIndex(f, 'angular')
     logging.info("Index loading ...")
     for i, v in enumerate(tf_idf_matrix):
         a = v.toarray()[0]
-        a[a >= tfidfthreshord] = 1
-        a[a < tfidfthreshord] = 0
+        #a[a > tfidfthreshord] = 1
+        #a[a <= tfidfthreshord] = 0
         t.add_item(i, a)
 
     logging.info("Index building in progress with %d trees", nb_trees)
@@ -57,7 +60,7 @@ def predict(q, f, vectorizer, annoyt):
 
 if __name__ == '__main__':
     df = getdf("france.csv")
-    vectorizer, annoyindex = learn(df, 5000)
+    vectorizer, annoyindex = learn(df, int(sys.argv[1]))
     # Save vectorizer and index
     annoyindex.save('test.ann')
     with open('vectorizer.pk', 'wb') as fin:
