@@ -2,6 +2,8 @@
 
 [![SWH](https://archive.softwareheritage.org/badge/swh:1:rev:7d0916ac7a43b0d811e4e66c23b69720139068e6/)](https://archive.softwareheritage.org/swh:1:rev:7d0916ac7a43b0d811e4e66c23b69720139068e6;origin=https://github.com/scampion/opengeocode;visit=swh:1:snp:48d8937d82bd177e3ce4654705d358e06a8f2895/)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4273721.svg)](https://doi.org/10.5281/zenodo.4273721)
+
 
 Open GeoCoding
 ==============
@@ -64,7 +66,7 @@ Cite
   author = {Campion Sebastien},
   date = {2020},
   license = {AGPL},
-  url = {https://scamp.fr/opengeocode},
+  url = {https://www.scamp.fr/opengeocode},
   abstract = {Fast fuzzy match address geocode resolution HTTP API Server based on Open Street Map.},
   repository= {https://github.com/scampion/opengeocode},
   swhid = {swh:1:rev:7d0916ac7a43b0d811e4e66c23b69720139068e6;origin=https://github.com/scampion/opengeocode;visit=swh:1:snp:48d8937d82bd177e3ce4654705d358e06a8f2895},
