@@ -30,7 +30,7 @@ def getdf(csv_filepath):
     return df
 
 
-def learn(df, f, tfidfthreshord=0.5, nb_trees=10):
+def learn(df, f, tfidfthreshord=0.2, nb_trees=10):
     logging.info("Vectorize %d entry with %d features", df.size, f)
     vectorizer = TfidfVectorizer(min_df=1, analyzer=ngrams, max_features=f)
     tf_idf_matrix = vectorizer.fit_transform(df['address'])
@@ -57,7 +57,7 @@ def predict(q, f, vectorizer, annoyt):
 
 if __name__ == '__main__':
     df = getdf("france.csv")
-    vectorizer, annoyindex = learn(df, 1000)
+    vectorizer, annoyindex = learn(df, 5000)
     # Save vectorizer and index
     annoyindex.save('test.ann')
     with open('vectorizer.pk', 'wb') as fin:

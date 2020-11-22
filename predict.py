@@ -23,10 +23,10 @@ df = codebook.getdf("france.csv")
 for r in t.get_nns_by_vector(v, 3):
     print(df.iloc[r])
 
-features = vectorizer.get_feature_names()
-indices = np.argsort(vectorizer.idf_)[::-1]
-features = vectorizer.get_feature_names()
-top_n = 2
-top_features = [features[i] for i in indices[:top_n]]
-print top_features
+# features = vectorizer.get_feature_names()
+# indices = np.argsort(vectorizer.idf_)[::-1]
+# features = vectorizer.get_feature_names()
+# top_n = 2
+# top_features = [features[i] for i in indices[:top_n]]
+# print top_features
 
