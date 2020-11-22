@@ -30,15 +30,18 @@ def getdf(csv_filepath):
     return df
 
 
-def learn(df, f, nb_trees=10):
+def learn(df, f, tfidfthreshord=0.5, nb_trees=10):
     logging.info("Vectorize %d entry with %d features", df.size, f)
-    vectorizer = TfidfVectorizer(max_df=1000, min_df=0, analyzer=ngrams, max_features=f)
+    vectorizer = TfidfVectorizer(min_df=1, analyzer=ngrams, max_features=f)
     tf_idf_matrix = vectorizer.fit_transform(df['address'])
 
     t = AnnoyIndex(f, 'angular')
     logging.info("Index loading ...")
     for i, v in enumerate(tf_idf_matrix):
-        t.add_item(i, v.toarray()[0])
+        a = v.toarray()[0]
+        a[a >= tfidfthreshord] = 1
+        a[a < tfidfthreshord] = 0
+        t.add_item(i, a)
 
     logging.info("Index building in progress with %d trees", nb_trees)
     t.build(nb_trees, n_jobs=-1)
