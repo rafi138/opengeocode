@@ -11,7 +11,7 @@ with open('vectorizer.pk', 'rb') as fin:
     vectorizer = pickle.load(fin)
 
 
-f = 1000
+f = 5000
 t = AnnoyIndex(f, 'angular')# Length of item vector that will be indexed
 t.load("test.ann")
 
