@@ -34,7 +34,7 @@ def getdf(csv_filepath):
 
 
 def vectorize(df, ofile=None):
-    logging.info("Vectorize %d entry with %s max features", df.size)
+    logging.info("Vectorize %d entry", df.size)
     vectorizer = TfidfVectorizer(analyzer=ngrams)
     tf_idf_matrix = vectorizer.fit_transform(df['address'])
     logging.info("tf_idf_matrix shape %s", tf_idf_matrix.shape)
@@ -42,6 +42,7 @@ def vectorize(df, ofile=None):
 
 
 def codebook(tf_idf_matrix, nb_of_clusters=128):
+    logging.info("MiniBatchKMeans")
     kmeans = MiniBatchKMeans(n_clusters=nb_of_clusters, random_state=rng, verbose=True)
     kmeans.fit(tf_idf_matrix)
     return kmeans.cluster_centers_
@@ -51,9 +52,9 @@ def index(tf_idf_matrix, cb, nb_trees=10):
     f = cb.shape[0]
     t = AnnoyIndex(f, 'angular')
     logging.info("Index loading ...")
-    for i, v in enumerate(tf_idf_matrix):
-        a = v[0].dot(cb.T)[0]
-        t.add_item(i, a)
+    reduc = tf_idf_matrix.dot(cb.T)
+    for i, v in enumerate(reduc):
+        t.add_item(i, v)
     logging.info("Index building in progress with %d trees", nb_trees)
     t.build(nb_trees, n_jobs=-1)
     return t
