@@ -6,15 +6,16 @@ import logging
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import MiniBatchKMeans
+from numpy.random import RandomState
 
 from annoy import AnnoyIndex
 
 logging.basicConfig(level=logging.INFO)
-from numpy.random import RandomState
 rng = RandomState(0)
 
+
 def ngrams(string, n=3):
-    string = re.sub(r'[,-./]|\sBD',r'', string)
+    string = re.sub(r'[,-./]|\sBD', r'', string)
     ngrams = zip(*[string[i:] for i in range(n)])
     return [''.join(ngram) for ngram in ngrams]
 
@@ -32,53 +33,58 @@ def getdf(csv_filepath):
     return df
 
 
-def vectorize(df, f=None, ofile=None):
+def vectorize(df, ofile=None):
     logging.info("Vectorize %d entry with %s max features", df.size, f)
     vectorizer = TfidfVectorizer(analyzer=ngrams)
     tf_idf_matrix = vectorizer.fit_transform(df['address'])
     logging.info("tf_idf_matrix shape %s", tf_idf_matrix.shape)
-    if ofile:
-        with open(ofile, 'wb') as fin:
-            pickle.dump(vectorizer, fin)
     return tf_idf_matrix, vectorizer
 
 
-def minikm(tf_idf_matrix):
-    kmeans = MiniBatchKMeans(n_clusters=128, random_state=rng, verbose=True)
+def codebook(tf_idf_matrix, nb_of_clusters=128):
+    kmeans = MiniBatchKMeans(n_clusters=nb_of_clusters, random_state=rng, verbose=True)
     kmeans.fit(tf_idf_matrix)
-    return kmeans
+    return kmeans.cluster_centers_
 
 
-def sparce_pca(tf_idf_matrix):
-    n_components = tf_idf_matrix.shape[-1]
-    estimator = MiniBatchSparsePCA(n_components=n_components, alpha=0.8, n_iter=100, batch_size=3, random_state=rng, n_jobs=-1)
-    estimator.fit(tf_idf_matrix.toarray())
-    components_ = estimator.components_
-    return components_
-
-def index(tf_idf_matrix, nb_trees=10,  ofile=None):
+def index(tf_idf_matrix, cb, nb_trees=10):
+    f = cb.shape[0]
     t = AnnoyIndex(f, 'angular')
     logging.info("Index loading ...")
     for i, v in enumerate(tf_idf_matrix):
-        a = v.toarray()[0]
-        a[a > tfidfthreshord] = 1
-        a[a <= tfidfthreshord] = 0
+        a = v[0].dot(cb.T)[0]
         t.add_item(i, a)
     logging.info("Index building in progress with %d trees", nb_trees)
     t.build(nb_trees, n_jobs=-1)
-    if ofile:
-        annoyindex.save(ofile)
+    return t
 
 
-
-def predict(q, f, vectorizer, annoyt):
-    q = q.lower()
-    v = vectorizer.transform([q]).toarray()[0]
-    n = 10
-    t.get_nns_by_vector(v, n)
+def predict(q, cb, vectorizer, t, n=10, df=None):
+    v = vectorizer.transform([q.lower()])[0].dot(cb.T)[0]
+    for r in t.get_nns_by_vector(v, n):
+        if df:
+            yield r, df.iloc[r]
+        else:
+            yield r
 
 
 if __name__ == '__main__':
+    # Load dataset
     df = getdf("france.csv")
-    vectorizer, annoyindex = learn(df, 5000)
-    # Save vectorizer and index
+
+    # TFIDF
+    tf_idf_matrix, vectorizer = vectorize(df, None)
+    with open("test.vec", 'wb') as fin:
+        pickle.dump(vectorizer, fin)
+
+    # Reduction
+    cb = codebook(tf_idf_matrix)
+    np.save("cb", cb)
+
+    # Indexation
+    t = index(tf_idf_matrix, cb)
+    t.save("test.ann")
+
+    # Search
+    q = "rue de la porte 76270 Neufchatel-en-Bray"
+    predict(q, cb, vectorizer, )
