@@ -6,7 +6,9 @@ import logging
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import MiniBatchDictionaryLearning
 from numpy.random import RandomState
+from sklearn.neighbors import NearestNeighbors, KDTree
 
 from annoy import AnnoyIndex
 
@@ -48,6 +50,31 @@ def codebook(tf_idf_matrix, nb_of_clusters=1024):
     return kmeans.cluster_centers_
 
 
+def codebook2(tf_idf_matrix, nb_of_clusters=1024):
+    logging.info("MiniBatchDictionaryLearning")
+    mbdl = MiniBatchDictionaryLearning(n_components=nb_of_clusters, random_state=rng, verbose=True)
+    group_size = 10000
+    for i in range(0, tf_idf_matrix.shape[0], group_size):
+        mbdl.fit(tf_idf_matrix[i:i+group_size].toarray())
+    red = mbdl.fit_transform(tf_idf_matrix.toarray())
+    return mbdl, red
+
+
+def index3(rtf_idf_matrix):
+    kdt = KDTree(rtf_idf_matrix, leaf_size=30, metric='cosine')
+    return kdt
+
+def index2(red, nb_trees=10):
+    f = cb.shape[0]
+    t = AnnoyIndex(f, 'angular')
+    logging.info("Index loading ...")
+    for i, v in enumerate(red):
+        t.add_item(i, v)
+    logging.info("Index building in progress with %d trees", nb_trees)
+    t.build(nb_trees, n_jobs=-1)
+    return t
+
+
 def index(tf_idf_matrix, cb, nb_trees=10):
     f = cb.shape[0]
     t = AnnoyIndex(f, 'angular')
@@ -82,10 +109,21 @@ if __name__ == '__main__':
     cb = codebook(tf_idf_matrix)
     np.save("cb", cb)
 
-    # Indexation
-    t = index(tf_idf_matrix, cb)
-    t.save("test.ann")
+    # mbdl, red = codebook2(tf_idf_matrix)
+    # with open("mbdl.vec", 'wb') as fin:
+    #     pickle.dump(mbdl, fin)
 
+
+    # Indexation
+    # t = index2(red, cb)
+    # t.save("test_mbld.ann")
+
+    kdt = index3(tf_idf_matrix.dot(cb.T))
+
+    # t = index(tf_idf_matrix, cb)
+    # t.save("test.ann")
+    #
     # Search
     q = "rue de la porte 76270 Neufchatel-en-Bray"
     predict(q, cb, vectorizer, t, n=10, df=df)
+    kdt.query(X, k=2, return_distance=False)
