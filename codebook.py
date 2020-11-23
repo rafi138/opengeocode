@@ -34,7 +34,7 @@ def getdf(csv_filepath):
 
 
 def vectorize(df, ofile=None):
-    logging.info("Vectorize %d entry with %s max features", df.size)
+    logging.info("Vectorize %d entry", df.size)
     vectorizer = TfidfVectorizer(analyzer=ngrams)
     tf_idf_matrix = vectorizer.fit_transform(df['address'])
     logging.info("tf_idf_matrix shape %s", tf_idf_matrix.shape)
