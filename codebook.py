@@ -41,7 +41,7 @@ def vectorize(df, ofile=None):
     return tf_idf_matrix, vectorizer
 
 
-def codebook(tf_idf_matrix, nb_of_clusters=128):
+def codebook(tf_idf_matrix, nb_of_clusters=1024):
     logging.info("MiniBatchKMeans")
     kmeans = MiniBatchKMeans(n_clusters=nb_of_clusters, random_state=rng, verbose=True)
     kmeans.fit(tf_idf_matrix)
@@ -63,7 +63,7 @@ def index(tf_idf_matrix, cb, nb_trees=10):
 def predict(q, cb, vectorizer, t, n=10, df=None):
     v = vectorizer.transform([q.lower()])[0].dot(cb.T)[0]
     for r in t.get_nns_by_vector(v, n):
-        if df:
+        if df is not None:
             yield r, df.iloc[r]
         else:
             yield r
@@ -88,4 +88,4 @@ if __name__ == '__main__':
 
     # Search
     q = "rue de la porte 76270 Neufchatel-en-Bray"
-    predict(q, cb, vectorizer, )
+    predict(q, cb, vectorizer, t, n=10, df=df)
