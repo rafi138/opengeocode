@@ -6,6 +6,7 @@ import logging
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import TruncatedSVD
 
 logging.basicConfig(level=logging.INFO)
 
@@ -39,16 +40,20 @@ def vectorize(df, max_df=0.01, min_df=0.001):
 
 if __name__ == '__main__':
     df = getdf("france.csv")
-    X, vectorizer = vectorize(df, None)
+    X, vectorizer = vectorize(df)
     with open("TfidfVectorizer.p", 'wb') as fin:
         pickle.dump(vectorizer, fin)
     #del df['address']  # free memory
-    nbrs = NearestNeighbors(n_neighbors=X.shape[-1], algorithm='brute').fit(X)
+
+    tsvd = TruncatedSVD(n_components=128)
+    X_sparse_tsvd = tsvd.fit(X).transform(X)
+    nbrs = NearestNeighbors(n_neighbors=X_sparse_tsvd.shape[-1], algorithm='ball_tree').fit(X_sparse_tsvd)
 
     q = "rue de la porte 76270 Neufchatel-en-Bray"
     start = time.time()
     vq = vectorizer.transform([q.lower()])
-    results = nbrs.kneighbors(vq.toarray(), 10)[1][0]
+    vqt = tsvd.transform(vq)
+    results = nbrs.kneighbors(vqt, 10)[1][0]
     print("Time : %0.6f sec" % (time.time() - start))
     for k in results:
         print(df.iloc[k])
