@@ -23,7 +23,7 @@ def save(filename, stream):
     country = filename.replace('.csv', '')
     ind[country] = ngram.NGram()
     inv[country] = {}
-    s_csv = csv.reader(stream, delimiter=';')
+    s_csv = csv.reader(stream, delimiter=',')
     next(s_csv)
     for row in s_csv:
         coord = tuple(map(float, row[0:2]))
