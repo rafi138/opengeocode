@@ -112,7 +112,7 @@ def index():
                       } else { 
                         var jsonResponse = JSON.parse(xhr.response);
                         document.querySelector("#result").innerHTML = jsonResponse.result;
-                        document.querySelector("#time").innerHTML = 'time : ' + Math.round(Number(jsonResponse.time) * 1000) + ' nanosecs';
+                        document.querySelector("#time").innerHTML = 'time : ' + Math.round(Number(jsonResponse.time) * 1000) + ' ms';
                       }
                     }
                 }
