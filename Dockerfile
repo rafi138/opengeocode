@@ -1,5 +1,4 @@
 FROM python:3.7-buster
-RUN apt update && apt install -y osmctools
 RUN mkdir /app
 WORKDIR /app
 ADD requirements.txt .
