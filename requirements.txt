@@ -1,5 +1,3 @@
-Flask
-gunicorn
-ngram
-gevent
-esy-osm-pbf
+Flask==1.1.1
+gunicorn==20.0.4
+datasketch==1.5.3
