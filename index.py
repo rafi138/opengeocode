@@ -1,6 +1,11 @@
 import json, string, logging, os, pickle, time
+
+from annoy import AnnoyIndex
+import random
+
 from flask import Flask, request, jsonify, abort, render_template_string
 from datasketch import MinHashLSHForest, MinHash
+
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -10,10 +15,16 @@ N = 2
 data_dir = "data"
 
 ind = {}
-for f in os.listdir(data_dir):
-    if f.endswith(".p"):
-        ind[f.split('.')[0]] = pickle.load(open(os.path.join(data_dir, f), 'rb'))
 
+for f in os.listdir(data_dir):
+    if f.endswith(".ann"):
+        name = f.split('.')[0]
+        filepath = os.path.join(data_dir, f)
+        t = AnnoyIndex(32, 'hamming')
+        t.load(filepath)
+        ind[name] = {"ann": t,
+                     "coords": pickle.load(open(filepath.replace(".ann", ".p"), 'rb'))
+                     }
 
 def hash(s):
     s.lower().translate(str.maketrans('', '', string.punctuation))
@@ -26,22 +37,21 @@ def hash(s):
 def build(filepath):
     coords = []
     properties = ['city', 'number', 'postcode', 'region', 'street']
-    forest = MinHashLSHForest(num_perm=32)
+    t = AnnoyIndex(32, 'hamming')
     for i, line in enumerate(open(filepath, 'r')):
         d = json.loads(line)
         c = d['geometry']['coordinates']
         coords.append(c)
         s = ' '.join([d['properties'][p] for p in properties])
-        mh = hash(s)
-        forest.add(i, mh)
-        if i % 1000 == 0:
-            print("%9d : %s" % (i, s))
-    forest.index()
-    pickle.dump({'forest': forest, 'coords': coords}, open(os.path.join(data_dir, filepath + ".p"), "wb"))
+        t.add_item(i, hash(s).hashvalues)
+    t.build(10)
+    t.save(os.path.join(data_dir, filepath + ".ann"))
+    with open(os.path.join(data_dir, filepath + ".p"), 'wb') as f:
+        pickle.dump(coords, f)
 
 
-def search(forest, coords, s, k=5):
-    for r in forest.query(hash(s), k):
+def search(ann, coords, s, n=5):
+    for r in ann.get_nns_by_vector(hash(s).hashvalues, n, search_k=-1, include_distances=False):
         yield r, coords[r]
 
 
@@ -50,7 +60,7 @@ def query(country):
     if country in ind.keys():
         q = request.args.get('q')
         s = time.time()
-        res = list(search(ind[country]['forest'], ind[country]['coords'], q))
+        res = list(search(ind[country]['ann'], ind[country]['coords'], q))
         e = time.time()
         return jsonify({'query': q,
                         'result': res,
