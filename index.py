@@ -1,4 +1,5 @@
 import json, string, logging, os, pickle, time
+import joblib
 from flask import Flask, request, jsonify, abort, render_template_string
 from datasketch import MinHashLSHForest, MinHash
 
@@ -37,7 +38,8 @@ def build(filepath):
         if i % 1000 == 0:
             print("%9d : %s" % (i, s))
     forest.index()
-    pickle.dump({'forest': forest, 'coords': coords}, open(os.path.join(data_dir, filepath + ".p"), "wb"))
+    with open(os.path.join(data_dir, filepath + ".p"), 'wb') as fo:
+        joblib.dump({'forest': forest, 'coords': coords}, fo)
 
 
 def search(forest, coords, s, k=5):
