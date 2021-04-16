@@ -1,0 +1,45 @@
+<html>
+<head></head>
+<body style="font-family: sans-serif">
+<div style="text-align: center">
+    <img src="images/ogc.svg">
+    <h1>Open GeoCoding</h1>
+    <select id="country">
+        <option value="test">test</option>
+    </select>
+    <input type="text" id="query"><hr>
+    <span id="result"></span><br>
+    <span id="time"></span>
+    <hr>
+    API server : <input id="apiserver" type="text" value="http://localhost:8000">
+    <hr>
+    <a href="https://github.com/scampion/opengeocode">github</a>
+</div>
+
+<script type="text/javascript">
+    (function() {
+        var apiserver  = document.querySelector("#apiserver").value;
+        document.querySelector("#query").onkeyup = function (e) {
+            console.log();
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', apiserver + '/' + document.querySelector("#country").value + '?q=' + e.target.value);
+            xhr.send();
+            xhr.onload = function() {
+                if (xhr.status != 200) {
+                    console.log(`Error ${xhr.status}: ${xhr.statusText}`);
+                } else {
+                    var jsonResponse = JSON.parse(xhr.response);
+                    document.querySelector("#result").innerHTML = "";
+                    jsonResponse.result.forEach(function(value){
+                        document.querySelector("#result").innerHTML += "<a  href='https://maps.google.com/?q=" + value[1][1] + "," + value[1][0] + "'>" + value + "</a><br>";
+                    });
+                    document.querySelector("#time").innerHTML = 'time : ' + Math.round(Number(jsonResponse.time) * 1000) + ' ms';
+                }
+            }
+        }
+    })();
+</script>
+</body>
+</html>
+
+

@@ -1,13 +1,28 @@
 import json, string, logging, os, pickle, time
+from typing import Optional
 
 from annoy import AnnoyIndex
 import random
 
-from flask import Flask, request, jsonify, abort, render_template_string
+from fastapi import FastAPI, Path, Query,  HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from datasketch import MinHashLSHForest, MinHash
 
+app = FastAPI()
 
-app = Flask(__name__)
+origins = [
+    "http://localhost:8888"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('ogc')
 
@@ -25,6 +40,7 @@ for f in os.listdir(data_dir):
         ind[name] = {"ann": t,
                      "coords": pickle.load(open(filepath.replace(".ann", ".p"), 'rb'))
                      }
+
 
 def hash(s):
     s.lower().translate(str.maketrans('', '', string.punctuation))
@@ -44,7 +60,7 @@ def build(filepath):
         coords.append(c)
         s = ' '.join([d['properties'][p] for p in properties])
         t.add_item(i, hash(s).hashvalues)
-        if i % 1000 == 0 :
+        if i % 1000 == 0:
             print("%9d %s" % (i, s))
     t.build(10)
     t.save(os.path.join(data_dir, filepath + ".ann"))
@@ -57,69 +73,25 @@ def search(ann, coords, s, n=5):
         yield r, coords[r]
 
 
-@app.route('/<string:country>')
-def query(country):
+@app.get('/')
+async def index():
+    return list(ind.keys())
+
+
+@app.get('/{country}')
+async def query(country: str = Path(..., title="The name of the country indexed"),
+                q: str = ""
+                ):
     if country in ind.keys():
-        q = request.args.get('q')
         s = time.time()
         res = list(search(ind[country]['ann'], ind[country]['coords'], q))
         e = time.time()
-        return jsonify({'query': q,
-                        'result': res,
-                        'time': e - s
-                        })
-    else:
-        abort(404, description="Country %s not indexed" % country)
-
-
-@app.route('/')
-def index():
-    t = """
-        <html>
-        <head></head>
-        <body style="font-family: sans-serif">
-        <div style="text-align: center">
-            {{ svg | safe }}
-        <h1>Open GeoCoding</h1>
-        <select id="country">
-            {% for country in countries %}
-                  <option value="{{country}}">{{country}}</option>
-            {% endfor %}
-        </select>
-        <input type="text" id="query"><hr>
-        <span id="result"></span><br>
-        <span id="time"></span>
-        <hr>
-         <a href="https://github.com/scampion/opengeocode">github</a>
-        </div>
-
-        <script type="text/javascript">
-            (function() {
-                document.querySelector("#query").onkeyup = function (e) {
-                    console.log();
-                  let xhr = new XMLHttpRequest();
-                  xhr.open('GET', './' + document.querySelector("#country").value + '?q=' + e.target.value);
-                  xhr.send();
-                    xhr.onload = function() {
-                      if (xhr.status != 200) { 
-                        console.log(`Error ${xhr.status}: ${xhr.statusText}`); 
-                      } else { 
-                        var jsonResponse = JSON.parse(xhr.response);
-                        document.querySelector("#result").innerHTML = "";
-                        jsonResponse.result.forEach(function(value){                            
-                            document.querySelector("#result").innerHTML += "<a  href='https://maps.google.com/?q=" + value[1][1] + "," + value[1][0] + "'>" + value + "</a><br>";
-                            console.log(value);
-                        });                        
-                        document.querySelector("#time").innerHTML = 'time : ' + Math.round(Number(jsonResponse.time) * 1000) + ' ms';
-                      }
-                    }
+        return {'query': q,
+                'result': res,
+                'time': e - s
                 }
-        })();
-        </script>
-        </body>
-        </html> 
-        """
-    return render_template_string(t, svg=open(os.path.join('images', 'ogc.svg')).read(), countries=ind.keys())
+    else:
+        raise HTTPException(status_code=404, detail=f"Country {country} not indexed")
 
 
 if __name__ == '__main__':
