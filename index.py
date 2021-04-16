@@ -44,6 +44,8 @@ def build(filepath):
         coords.append(c)
         s = ' '.join([d['properties'][p] for p in properties])
         t.add_item(i, hash(s).hashvalues)
+        if i % 1000 == 0 :
+            print("%9d %s" % (i, s))
     t.build(10)
     t.save(os.path.join(data_dir, filepath + ".ann"))
     with open(os.path.join(data_dir, filepath + ".p"), 'wb') as f:
