@@ -20,15 +20,16 @@ for f in os.listdir(data_dir):
     if f.endswith(".ann"):
         name = f.split('.')[0]
         filepath = os.path.join(data_dir, f)
-        t = AnnoyIndex(32, 'hamming')
+        t = AnnoyIndex(128, 'euclidean')
         t.load(filepath)
         ind[name] = {"ann": t,
-                     "coords": pickle.load(open(filepath.replace(".ann", ".p"), 'rb'))
+                     "coords": pickle.load(open(filepath.replace(".ann", ".p"), 'rb')),
+                     "geojson": filepath.replace(".ann", "")
                      }
 
 def hash(s):
     s.lower().translate(str.maketrans('', '', string.punctuation))
-    mh = MinHash(num_perm=32)
+    mh = MinHash(num_perm=128)
     for d in [s[i:i + N] for i in range(len(s) - N + 1)]:
         mh.update(d.encode('utf8'))
     return mh
@@ -37,7 +38,7 @@ def hash(s):
 def build(filepath):
     coords = []
     properties = ['city', 'number', 'postcode', 'region', 'street']
-    t = AnnoyIndex(32, 'hamming')
+    t = AnnoyIndex(128, 'euclidean')
     for i, line in enumerate(open(filepath, 'r')):
         d = json.loads(line)
         c = d['geometry']['coordinates']
@@ -46,9 +47,11 @@ def build(filepath):
         t.add_item(i, hash(s).hashvalues)
         if i % 1000 == 0 :
             print("%9d %s" % (i, s))
-    t.build(10)
-    t.save(os.path.join(data_dir, filepath + ".ann"))
-    with open(os.path.join(data_dir, filepath + ".p"), 'wb') as f:
+    t.build(100)
+    annfilepath = os.path.join(data_dir, os.path.basename(filepath) + ".ann")
+    print(annfilepath)
+    t.save(annfilepath)
+    with open(os.path.join(data_dir, os.path.basename(filepath) + ".p"), 'wb') as f:
         pickle.dump(coords, f)
 
 
@@ -56,6 +59,17 @@ def search(ann, coords, s, n=5):
     for r in ann.get_nns_by_vector(hash(s).hashvalues, n, search_k=-1, include_distances=False):
         yield r, coords[r]
 
+def get_values(geojson, res):
+    if not os.path.exists(geojson):
+        print("geojson %s doesn't exist" % geojson)
+        return
+    indexes = [i for i, _ in res]
+    with open(geojson, 'r') as f:
+        for i, l in enumerate(f):
+            if i in indexes:
+                yield i, l
+            elif i > max(indexes):
+                break
 
 @app.route('/<string:country>')
 def query(country):
@@ -64,8 +78,11 @@ def query(country):
         s = time.time()
         res = list(search(ind[country]['ann'], ind[country]['coords'], q))
         e = time.time()
+        values = get_values(ind[country]['geojson'], res)
+        print(res)
         return jsonify({'query': q,
                         'result': res,
+                        'values': list(values),
                         'time': e - s
                         })
     else:
@@ -96,7 +113,7 @@ def index():
         <script type="text/javascript">
             (function() {
                 document.querySelector("#query").onkeyup = function (e) {
-                    console.log();
+                  document.querySelector("#result").innerHTML = "";
                   let xhr = new XMLHttpRequest();
                   xhr.open('GET', './' + document.querySelector("#country").value + '?q=' + e.target.value);
                   xhr.send();
@@ -105,11 +122,15 @@ def index():
                         console.log(`Error ${xhr.status}: ${xhr.statusText}`); 
                       } else { 
                         var jsonResponse = JSON.parse(xhr.response);
-                        document.querySelector("#result").innerHTML = "";
-                        jsonResponse.result.forEach(function(value){                            
+                        jsonResponse.result.forEach(function(value){
                             document.querySelector("#result").innerHTML += "<a  href='https://maps.google.com/?q=" + value[1][1] + "," + value[1][0] + "'>" + value + "</a><br>";
                             console.log(value);
-                        });                        
+                        });
+                        jsonResponse.values.forEach(function(value){
+                            document.querySelector("#result").innerHTML += value+ "<br>";
+                            console.log(value);
+                        });
+
                         document.querySelector("#time").innerHTML = 'time : ' + Math.round(Number(jsonResponse.time) * 1000) + ' ms';
                       }
                     }
