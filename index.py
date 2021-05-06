@@ -11,7 +11,9 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('ogc')
 
-N = 2
+N = 3
+NBDIM = 256
+NBTREES = 10
 data_dir = "data"
 
 ind = {}
@@ -20,7 +22,7 @@ for f in os.listdir(data_dir):
     if f.endswith(".ann"):
         name = f.split('.')[0]
         filepath = os.path.join(data_dir, f)
-        t = AnnoyIndex(128, 'euclidean')
+        t = AnnoyIndex(NBDIM, 'euclidean')
         t.load(filepath)
         ind[name] = {"ann": t,
                      "coords": pickle.load(open(filepath.replace(".ann", ".p"), 'rb')),
@@ -29,7 +31,7 @@ for f in os.listdir(data_dir):
 
 def hash(s):
     s.lower().translate(str.maketrans('', '', string.punctuation))
-    mh = MinHash(num_perm=128)
+    mh = MinHash(num_perm=NBDIM)
     for d in [s[i:i + N] for i in range(len(s) - N + 1)]:
         mh.update(d.encode('utf8'))
     return mh
@@ -38,7 +40,7 @@ def hash(s):
 def build(filepath):
     coords = []
     properties = ['city', 'number', 'postcode', 'region', 'street']
-    t = AnnoyIndex(128, 'euclidean')
+    t = AnnoyIndex(NBDIM, 'euclidean')
     for i, line in enumerate(open(filepath, 'r')):
         d = json.loads(line)
         c = d['geometry']['coordinates']
@@ -47,7 +49,7 @@ def build(filepath):
         t.add_item(i, hash(s).hashvalues)
         if i % 1000 == 0 :
             print("%9d %s" % (i, s))
-    t.build(100)
+    t.build(NBTREES)
     annfilepath = os.path.join(data_dir, os.path.basename(filepath) + ".ann")
     print(annfilepath)
     t.save(annfilepath)
